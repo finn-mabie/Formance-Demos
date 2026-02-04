@@ -467,28 +467,22 @@ set_tx_meta("bank_ref", "NPP-123456")`,
         color: 'blue',
       },
       {
-        address: '@interco:ph:debt',
-        name: 'Intercompany (owed to PH)',
-        description: 'What Brazil owes Philippines for USDT transfers',
-        color: 'purple',
+        address: '@clients:{CLIENT_ID}:br:bank',
+        name: 'Client BRL (BR Bank)',
+        description: 'Client BRL at Brazil bank - post conversion',
+        color: 'blue',
+      },
+      {
+        address: '@clients:{CLIENT_ID}:remittances:{REMITTANCE_ID}:pending',
+        name: 'Pending Wire (Client)',
+        description: 'Client BRL in transit to recipient',
+        color: 'orange',
       },
       {
         address: '@exchanges:{EXCHANGE_ID}',
         name: 'FX Exchange',
         description: 'Per-conversion account - stores rate, amounts in metadata',
         color: 'purple',
-      },
-      {
-        address: '@banks:bradesco:operating',
-        name: 'Bradesco Operating',
-        description: 'BRL operating account in Brazil',
-        color: 'green',
-      },
-      {
-        address: '@banks:bradesco:pending:wire:{REMITTANCE_ID}',
-        name: 'Pending Wire',
-        description: 'BRL in transit to recipient',
-        color: 'green',
       },
       {
         address: '@platform:ph:revenue',
@@ -604,15 +598,15 @@ set_tx_meta("rate", "0.998")`,
       {
         txType: 'INTERCO_INITIATED',
         label: 'Send USDT to Brazil (Pending)',
-        description: 'Philippines sends client USDT to Brazil Fireblocks - pending settlement',
+        description: 'Philippines sends client USDT to Brazil Fireblocks - USDT leaves PH custody, enters BR pending',
         numscript: `send [USDT/6 9980000000] (
   source = @clients:{CLIENT_ID}:ph:fireblocks
-  destination = @clients:{CLIENT_ID}:br:fireblocks:pending
+  destination = @world
 )
 
 send [USDT/6 9980000000] (
   source = @world
-  destination = @interco:ph:debt
+  destination = @clients:{CLIENT_ID}:br:fireblocks:pending
 )
 
 set_tx_meta("type", "INTERCO_INITIATED")
@@ -622,6 +616,12 @@ set_tx_meta("from_entity", "coins_ph")
 set_tx_meta("to_entity", "coins_br")
 set_tx_meta("status", "PENDING")`,
         queries: [
+          {
+            title: 'Client USDT Left PH Custody',
+            description: 'PH Fireblocks now zero for this client',
+            queryType: 'balance',
+            addressFilter: 'clients:{CLIENT_ID}:ph:fireblocks',
+          },
           {
             title: 'Client USDT Pending at Brazil',
             description: 'USDT in transit - not yet settled',
@@ -633,12 +633,6 @@ set_tx_meta("status", "PENDING")`,
             description: 'Total USDT pending settlement at Brazil',
             queryType: 'balance',
             addressFilter: 'clients::br:fireblocks:pending',
-          },
-          {
-            title: 'Intercompany Debt',
-            description: 'What Brazil owes Philippines',
-            queryType: 'balance',
-            addressFilter: 'interco:ph:debt',
           },
         ],
       },
@@ -673,7 +667,7 @@ set_tx_meta("status", "SETTLED")`,
       {
         txType: 'USDT_TO_BRL',
         label: 'Brazil Sells USDT → BRL',
-        description: 'Sell client USDT via OTC at 5.45 BRL rate',
+        description: 'Sell client USDT via OTC at 5.45 BRL rate - BRL still tracked as client funds',
         numscript: `send [USDT/6 9980000000] (
   source = @clients:{CLIENT_ID}:br:fireblocks
   destination = @exchanges:{EXCHANGE_ID}:br
@@ -691,7 +685,7 @@ send [BRL/2 5439100] (
 
 send [BRL/2 5439100] (
   source = @exchanges:{EXCHANGE_ID}:br
-  destination = @banks:bradesco:operating
+  destination = @clients:{CLIENT_ID}:br:bank
 )
 
 set_account_meta(@exchanges:{EXCHANGE_ID}:br, "type", "USDT_BRL")
@@ -709,10 +703,10 @@ set_tx_meta("client_id", "{CLIENT_ID}")
 set_tx_meta("rate", "5.45")`,
         queries: [
           {
-            title: 'Brazil Bank Balance',
-            description: 'BRL now in Bradesco operating account',
+            title: 'Client BRL at Brazil Bank',
+            description: 'BRL still tracked as client funds - ready for wire',
             queryType: 'balance',
-            addressFilter: 'banks:bradesco:operating',
+            addressFilter: 'clients:{CLIENT_ID}:br:bank',
           },
           {
             title: 'Brazil Exchange Details',
@@ -725,14 +719,14 @@ set_tx_meta("rate", "5.45")`,
       {
         txType: 'WIRE_INITIATED',
         label: 'Wire to Recipient',
-        description: 'Initiate BRL wire to Supplier ABC Ltda, R$150 fee',
+        description: 'Initiate BRL wire to Supplier ABC Ltda, R$150 fee deducted from client funds',
         numscript: `send [BRL/2 5424100] (
-  source = @banks:bradesco:operating
-  destination = @banks:bradesco:pending:wire:{REMITTANCE_ID}
+  source = @clients:{CLIENT_ID}:br:bank
+  destination = @clients:{CLIENT_ID}:remittances:{REMITTANCE_ID}:pending
 )
 
 send [BRL/2 15000] (
-  source = @banks:bradesco:operating
+  source = @clients:{CLIENT_ID}:br:bank
   destination = @platform:br:revenue
 )
 
@@ -745,10 +739,16 @@ set_tx_meta("amount", "R$54,241")
 set_tx_meta("fee", "R$150")`,
         queries: [
           {
-            title: 'Pending Wire',
-            description: 'BRL awaiting delivery to recipient',
+            title: 'Pending Wire (Client Funds)',
+            description: 'BRL awaiting delivery - still tracked as client funds',
             queryType: 'balance',
-            addressFilter: 'banks:bradesco:pending:wire:{REMITTANCE_ID}',
+            addressFilter: 'clients:{CLIENT_ID}:remittances:{REMITTANCE_ID}:pending',
+          },
+          {
+            title: 'Client BRL Remaining',
+            description: 'Should be zero after wire + fee',
+            queryType: 'balance',
+            addressFilter: 'clients:{CLIENT_ID}:br:bank',
           },
           {
             title: 'Brazil Revenue',
@@ -761,9 +761,9 @@ set_tx_meta("fee", "R$150")`,
       {
         txType: 'WIRE_SETTLED',
         label: 'Wire Delivered',
-        description: 'Recipient receives BRL - remittance complete',
+        description: 'Recipient (Supplier ABC Ltda) receives BRL - remittance complete',
         numscript: `send [BRL/2 5424100] (
-  source = @banks:bradesco:pending:wire:{REMITTANCE_ID}
+  source = @clients:{CLIENT_ID}:remittances:{REMITTANCE_ID}:pending
   destination = @world
 )
 
@@ -808,21 +808,21 @@ set_tx_meta("status", "DELIVERED")`,
       },
       {
         title: 'All Client Funds (Brazil)',
-        description: 'USDT held for all clients at BR (pending + settled)',
+        description: 'USDT + BRL held for all clients at BR',
         queryType: 'balance',
         addressFilter: 'clients::br:',
       },
       {
-        title: 'Pending Intercompany',
-        description: 'USDT in transit to Brazil',
+        title: 'Pending Intercompany (USDT)',
+        description: 'USDT in transit to Brazil - not yet settled',
         queryType: 'balance',
         addressFilter: 'clients::br:fireblocks:pending',
       },
       {
-        title: 'Intercompany Debt',
-        description: 'What Brazil owes Philippines',
+        title: 'Pending Wires (All Clients)',
+        description: 'All client BRL pending wire delivery',
         queryType: 'balance',
-        addressFilter: 'interco:ph:debt',
+        addressFilter: 'clients::remittances::pending',
       },
       {
         title: 'Total Platform Revenue',
@@ -838,12 +838,6 @@ set_tx_meta("status", "DELIVERED")`,
         description: 'FX conversion accounts with metadata',
         queryType: 'accounts',
         accountAddress: 'exchanges:',
-      },
-      {
-        title: 'Pending Wires',
-        description: 'All wires in transit',
-        queryType: 'balance',
-        addressFilter: 'banks:bradesco:pending:wire:',
       },
       {
         title: 'Track by Client',
