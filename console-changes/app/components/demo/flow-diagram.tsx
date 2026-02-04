@@ -126,8 +126,10 @@ function postingsToInitialState(postings: Posting[]): DiagramState {
   // Find roots
   const roots: string[] = [];
 
-  // If @world is in main tree and has outflows, it's a root
-  if (worldInMainTree && outflows.has('world') && (outflows.get('world')?.length || 0) > 0) {
+  // If @world is in main tree, has outflows, AND has no inflows, it's a root
+  // (If @world has inflows, it's an intermediary, not a root)
+  const worldInflows = inflows.get('world') || [];
+  if (worldInMainTree && outflows.has('world') && (outflows.get('world')?.length || 0) > 0 && worldInflows.length === 0) {
     roots.push('world');
   }
 
@@ -183,7 +185,8 @@ function postingsToInitialState(postings: Posting[]): DiagramState {
     }
     totalWidth += (accounts.length - 1) * horizontalGap;
 
-    const startX = mainTreeCenterX - totalWidth / 2;
+    // Ensure startX is never negative (boxes don't fall off left side)
+    const startX = Math.max(20, mainTreeCenterX - totalWidth / 2);
     let currentX = startX;
 
     for (const account of accounts) {
