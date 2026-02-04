@@ -24,9 +24,9 @@ export const coinsPHConfig = {
       color: 'blue',
     },
     {
-      address: '@exchanges:usdt:brl:{EXCHANGE_ID}',
+      address: '@exchanges:{EXCHANGE_ID}',
       name: 'Exchange Account',
-      description: 'Tracks a specific USDT/BRL conversion - stores rate and amounts in metadata',
+      description: 'Tracks a specific FX conversion - stores currency pair, rate, and amounts in metadata',
       color: 'purple',
     },
     {
@@ -82,30 +82,30 @@ set_tx_meta("amount", "10,000 USDT")`,
       description: 'Execute exchange: USDT sold to @world, BRL purchased from @world at 5.45 rate',
       numscript: `send [USDT/6 10000000000] (
   source = @treasury:binance:hot
-  destination = @exchanges:usdt:brl:{EXCHANGE_ID}
+  destination = @exchanges:{EXCHANGE_ID}
 )
 
 send [USDT/6 10000000000] (
-  source = @exchanges:usdt:brl:{EXCHANGE_ID}
+  source = @exchanges:{EXCHANGE_ID}
   destination = @world
 )
 
 send [BRL/2 5450000] (
   source = @world
-  destination = @exchanges:usdt:brl:{EXCHANGE_ID}
+  destination = @exchanges:{EXCHANGE_ID}
 )
 
 send [BRL/2 5450000] (
-  source = @exchanges:usdt:brl:{EXCHANGE_ID}
+  source = @exchanges:{EXCHANGE_ID}
   destination = @banks:bradesco:operating
 )
 
-set_account_meta(@exchanges:usdt:brl:{EXCHANGE_ID}, "type", "USDT_BRL")
-set_account_meta(@exchanges:usdt:brl:{EXCHANGE_ID}, "rate", "5.45")
-set_account_meta(@exchanges:usdt:brl:{EXCHANGE_ID}, "usdt_amount", "10000")
-set_account_meta(@exchanges:usdt:brl:{EXCHANGE_ID}, "brl_amount", "54500")
-set_account_meta(@exchanges:usdt:brl:{EXCHANGE_ID}, "remittance_id", "{REMITTANCE_ID}")
-set_account_meta(@exchanges:usdt:brl:{EXCHANGE_ID}, "executed_at", "2024-01-15T10:30:00Z")
+set_account_meta(@exchanges:{EXCHANGE_ID}, "type", "USDT_BRL")
+set_account_meta(@exchanges:{EXCHANGE_ID}, "rate", "5.45")
+set_account_meta(@exchanges:{EXCHANGE_ID}, "usdt_amount", "10000")
+set_account_meta(@exchanges:{EXCHANGE_ID}, "brl_amount", "54500")
+set_account_meta(@exchanges:{EXCHANGE_ID}, "remittance_id", "{REMITTANCE_ID}")
+set_account_meta(@exchanges:{EXCHANGE_ID}, "executed_at", "2024-01-15T10:30:00Z")
 
 set_tx_meta("type", "FX_CONVERSION")
 set_tx_meta("exchange_id", "{EXCHANGE_ID}")
@@ -116,7 +116,7 @@ set_tx_meta("rate", "5.45")`,
           title: 'Exchange Account',
           description: 'Shows the exchange with metadata (rate, amounts, timestamp)',
           queryType: 'account',
-          accountAddress: 'exchanges:usdt:brl:{EXCHANGE_ID}',
+          accountAddress: 'exchanges:{EXCHANGE_ID}',
         },
         {
           title: 'Bank Position',
@@ -186,7 +186,7 @@ set_tx_meta("status", "COMPLETED")`,
           title: 'Exchange Details',
           description: 'Account metadata stores FX rate and amounts',
           queryType: 'account',
-          accountAddress: 'exchanges:usdt:brl:{EXCHANGE_ID}',
+          accountAddress: 'exchanges:{EXCHANGE_ID}',
         },
       ],
     },
@@ -233,7 +233,7 @@ set_tx_meta("status", "COMPLETED")`,
  *    - NO "allowing unbounded overdraft" needed!
  *
  * 2. Per-Exchange Account with Metadata
- *    - @exchanges:usdt:brl:001 stores rate, amounts, timestamp
+ *    - @exchanges:001 stores currency pair, rate, amounts, timestamp in metadata
  *    - Query all exchanges to see conversion history
  *
  * 3. Wire Transfer with Pending State
