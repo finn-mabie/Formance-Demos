@@ -113,6 +113,14 @@ set_tx_meta("amount", "$10,000 USD")`,
           queryType: 'balance',
           addressFilter: 'clients::ph:bank',
         },
+        {
+          title: 'Remittance Journey (1 of 7)',
+          description: 'Track the complete remittance by ID - just getting started',
+          queryType: 'transactions',
+          transactionFilter: {
+            metadata: { remittance_id: '{REMITTANCE_ID}' },
+          },
+        },
       ],
     },
     {
@@ -244,6 +252,14 @@ set_tx_meta("status", "SETTLED")`,
           queryType: 'balance',
           addressFilter: 'clients::br:fireblocks',
         },
+        {
+          title: 'Remittance Journey (4 of 7)',
+          description: 'Halfway there - USD received, converted to USDT, crossed entities',
+          queryType: 'transactions',
+          transactionFilter: {
+            metadata: { remittance_id: '{REMITTANCE_ID}' },
+          },
+        },
       ],
     },
     {
@@ -356,8 +372,8 @@ set_tx_meta("bank_ref", "TED-789012")
 set_tx_meta("status", "DELIVERED")`,
       queries: [
         {
-          title: 'Complete Remittance Journey',
-          description: 'All transactions for this remittance',
+          title: 'Complete Remittance Journey (7 of 7)',
+          description: 'Full audit trail: USD→USDT→BRL→delivered - all tracked by remittance_id',
           queryType: 'transactions',
           transactionFilter: {
             metadata: { remittance_id: '{REMITTANCE_ID}' },
