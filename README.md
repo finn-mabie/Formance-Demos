@@ -8,6 +8,9 @@ Complete setup for running interactive Formance demos with the Formance Console.
 formance-demos/
 ├── README.md                       # This file
 ├── demos/
+│   ├── rain/
+│   │   ├── config.ts              # Rain demo configuration (B2B on-ramp)
+│   │   └── setup.sh               # Ledger creation script
 │   ├── monetae/
 │   │   ├── config.ts              # Demo configuration (TypeScript)
 │   │   └── setup.sh               # Ledger creation script
@@ -37,6 +40,16 @@ formance-demos/
 
 ## Available Demos
 
+### Rain
+**Money-In: Fiat to Stablecoin On-Ramp (B2B)**
+
+- Partner/customer hierarchy for B2B infrastructure
+- Virtual account provisioning with routing/account numbers
+- Fiat deposit pending → settled states
+- USD → USDC conversion via exchange pattern
+- Partner revenue sharing model
+- Card spend (USDC → merchant)
+
 ### Monetae
 **Fiat Custody + Stablecoin Conversion for Wealth Tech**
 
@@ -49,11 +62,12 @@ formance-demos/
 ### Coins.ph
 **Cross-Border Remittance with Tracked FX Conversions**
 
-- USDT received from client
-- USDT → BRL conversion via exchange pattern (no unbounded overdraft!)
-- Per-exchange accounts with rate metadata
+- Per-customer custody tracking (always know whose money)
+- USD → USDT conversion at Philippines
+- Intercompany transfer with pending settlement
+- USDT → BRL conversion at Brazil via OTC
 - Wire transfer with pending states
-- Platform fee collection
+- Platform fee collection (spread + wire fees)
 
 ### Sportsbet (in useDemoMode.ts)
 **Customer Wallet Lifecycle**
